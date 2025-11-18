@@ -1,0 +1,88 @@
+---
+title: "descriptives"
+author: "Alejandra Garcia Isaza"
+date: "2025-11-18"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(rio)
+library(here)
+library(tidyverse)
+library(haven)
+library(janitor)
+library(knitr)
+library(surveytoolbox)
+library(sjPlot)
+library(kableExtra)
+library(psych)
+library(sjmisc)
+library(foreign)
+
+
+library(tidyr)
+library(forcats)
+
+theme_set(theme_minimal())
+```
+
+### Loading the dataset (cohort 1 - wave 1)
+```{r}
+raw_par <- import(here("data", "LEAPS Coh1 Parent.sav"), setclass = "tbl_df")
+
+par <- raw_par %>% 
+  clean_names()
+
+view_df(par)
+
+data.frame(table(par$pid)) # no duplicated ids
+```
+
+```{r}
+
+demo_vars <- c(
+  "demo01_pre",
+  "demo03_pre",
+  "demo04_pre",
+  "demo09_pre",
+  "demo10_pre",
+  "demo12_pre",
+  "demo17_pre"
+)
+
+# OPTIONAL: Ensure variables are factors ------------------------------------
+par[demo_vars] <- lapply(par[demo_vars], as.factor)
+
+# 1. Frequency tables for all variables -------------------------------------
+demo_tables <- lapply(par[demo_vars], table, useNA = "ifany")
+
+# Print the tables
+demo_tables
+
+# 2. Long-format dataset for ggplot -----------------------------------------
+par_long <- par %>%
+  select(all_of(demo_vars)) %>%
+  pivot_longer(cols = everything(),
+               names_to = "variable",
+               values_to = "value")
+
+# 3. Bar plots faceted by demographic variable -------------------------------
+ggplot(par_long, aes(x = value)) +
+  geom_bar(fill = "steelblue") +
+  facet_wrap(~ variable, scales = "free_x") +
+  labs(
+    title = "Demographic Distributions",
+    x = "Category",
+    y = "Count"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+```
+
+
+Look at "regression models w mice imputation" R markdown in the file path: C:\Users\aleja\Documents\Projects\juntos\outcomes paper\scripts_outcomes
